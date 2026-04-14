@@ -246,7 +246,7 @@ set_permissions() {
 }
 
 initialize_bot() {
-    cd awg || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
+    cd awg_bot/awg || { echo -e "\n${RED}Ошибка перехода в директорию${NC}"; exit 1; }
     
     ../myenv/bin/python3.11 bot_manager.py < /dev/tty &
     local BOT_PID=$!
