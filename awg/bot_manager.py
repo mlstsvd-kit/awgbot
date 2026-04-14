@@ -397,8 +397,8 @@ async def handle_messages(message: types.Message):
             sent_message = await message.reply("Имя пользователя может содержать только буквы, цифры, дефисы и подчёркивания.")
             asyncio.create_task(delete_message_after_delay(sent_message.chat.id, sent_message.message_id, delay=2))
             return
+        user_main_messages.pop(f'{user_id}_waiting_for_user_name', None)
         user_main_messages['client_name'] = user_name
-        user_main_messages[f'{user_id}_waiting_for_user_name'] = False
         ipv6_subnet = get_ipv6_subnet()
         if ipv6_subnet:
             connect_buttons = [
