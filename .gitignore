@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+myenv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Sensitive Data - НИКОГДА НЕ КОММИТЬТЕ!
+files/setting.ini
+files/admins.json
+files/expirations.json
+files/traffic_limits.json
+files/connections/
+files/isp_cache.json
+users/
+
+# Logs and Backups
+*.log
+*.zip
+backup_*.zip
+chmod_error.log
+
+# Temporary files
+*.tmp
+/tmp/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+Thumbs.db
+.DS_Store
+*~
