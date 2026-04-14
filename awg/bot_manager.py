@@ -393,8 +393,10 @@ async def handle_messages(message: types.Message):
 
     if user_main_messages.get(f'{user_id}_waiting_for_user_name'):
         user_name = message.text.strip()
-        if not all(c.isalnum() or c in "-_" for c in user_name):
-            sent_message = await message.reply("Имя пользователя может содержать только буквы, цифры, дефисы и подчёркивания.")
+        # Проверяем только недопустимые символы для файловой системы/конфигов
+        forbidden_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in user_name for char in forbidden_chars):
+            sent_message = await message.reply("Имя не может содержать символы: / \\ : * ? \" < > |")
             asyncio.create_task(delete_message_after_delay(sent_message.chat.id, sent_message.message_id, delay=2))
             return
         user_main_messages.pop(f'{user_id}_waiting_for_user_name', None)
@@ -412,8 +414,7 @@ async def handle_messages(message: types.Message):
                 await bot.edit_message_text(
                     chat_id=main_chat_id,
                     message_id=main_message_id,
-                    text=f"Выберите тип подключения для пользователя **{user_name}**:",
-                    parse_mode="Markdown",
+                    text=f"Выберите тип подключения для пользователя {user_name}:",
                     reply_markup=connect_markup
                 )
             else:
@@ -434,8 +435,7 @@ async def handle_messages(message: types.Message):
                 await bot.edit_message_text(
                     chat_id=main_chat_id,
                     message_id=main_message_id,
-                    text=f"Выберите время действия конфигурации для пользователя **{user_name}**:",
-                    parse_mode="Markdown",
+                    text=f"Выберите время действия конфигурации для пользователя {user_name}:",
                     reply_markup=duration_markup
                 )
             else:
@@ -645,10 +645,10 @@ async def set_traffic_limit(callback: types.CallbackQuery):
                 id=client_name
             )
             db.set_user_expiration(client_name, expiration_time)
-            confirmation_text = f"Пользователь **{client_name}** добавлен. Конфигурация истечет через **{duration_choice}**."
+            confirmation_text = f"Пользователь {client_name} добавлен. Конфигурация истечет через {duration_choice}."
         else:
             db.set_user_expiration(client_name, None)
-            confirmation_text = f"Пользователь **{client_name}** добавлен с неограниченным временем действия."
+            confirmation_text = f"Пользователь {client_name} добавлен с неограниченным временем действия."
         if traffic_limit:
             limit_str = humanize.naturalsize(traffic_limit, binary=True)
             confirmation_text += f"\nЛимит трафика: {limit_str}"
@@ -915,7 +915,7 @@ async def update_traffic_usage():
                     if success:
                         sent_message = await bot.send_message(
                             admin,
-                            f"Пользователь **{username}** достиг лимита трафика и был заблокирован.",
+                            f"Пользователь {username} достиг лимита трафика и был заблокирован.",
                             parse_mode="Markdown",
                             disable_notification=True
                         )
@@ -1042,9 +1042,9 @@ async def client_delete_callback(callback_query: types.CallbackQuery):
                 os.remove(png_path)
         except:
             pass
-        confirmation_text = f"Пользователь **{username}** успешно удален."
+        confirmation_text = f"Пользователь {username} успешно удален."
     else:
-        confirmation_text = f"Не удалось удалить пользователя **{username}**."
+        confirmation_text = f"Не удалось удалить пользователя {username}."
     main_chat_id, main_message_id = user_main_messages.get(callback_query.from_user.id, (None, None))
     if main_chat_id and main_message_id:
         await bot.edit_message_text(
@@ -1074,7 +1074,7 @@ async def client_block_callback(callback_query: types.CallbackQuery):
 
     if action == 'block':
         success = await block_user(username)
-        confirmation_text = None if success else f"Не удалось заблокировать пользователя **{username}**."
+        confirmation_text = None if success else f"Не удалось заблокировать пользователя {username}."
     else:
         traffic_limits = load_traffic_limits()
         user_traffic = traffic_limits.get(username, {})
@@ -1095,8 +1095,7 @@ async def client_block_callback(callback_query: types.CallbackQuery):
             await bot.edit_message_text(
                 chat_id=callback_query.message.chat.id,
                 message_id=callback_query.message.message_id,
-                text=f"Выберите новый лимит трафика для пользователя **{username}**:",
-                parse_mode="Markdown",
+                text=f"Выберите новый лимит трафика для пользователя {username}:",
                 reply_markup=traffic_markup
             )
         elif expiration_time and expiration_time <= datetime.now(pytz.UTC):
@@ -1112,13 +1111,12 @@ async def client_block_callback(callback_query: types.CallbackQuery):
             await bot.edit_message_text(
                 chat_id=callback_query.message.chat.id,
                 message_id=callback_query.message.message_id,
-                text=f"Выберите новое время действия для пользователя **{username}**:",
-                parse_mode="Markdown",
+                text=f"Выберите новое время действия для пользователя {username}:",
                 reply_markup=duration_markup
             )
         else:
             success = await unblock_user(username)
-            confirmation_text = None if success else f"Не удалось разблокировать пользователя **{username}**."
+            confirmation_text = None if success else f"Не удалось разблокировать пользователя {username}."
             callback_query.data = f'client_{username}'
             await client_selected_callback(callback_query)
             if confirmation_text:
@@ -1167,17 +1165,16 @@ async def unblock_set_duration(callback: types.CallbackQuery):
                 id=username
             )
             db.set_user_expiration(username, expiration_time)
-            confirmation_text = f"Пользователь **{username}** разблокирован. Новый срок действия: {duration_choice}."
+            confirmation_text = f"Пользователь {username} разблокирован. Новый срок действия: {duration_choice}."
         else:
             db.set_user_expiration(username, None)
-            confirmation_text = f"Пользователь **{username}** разблокирован без ограничения по времени."
+            confirmation_text = f"Пользователь {username} разблокирован без ограничения по времени."
     else:
-        confirmation_text = f"Не удалось разблокировать пользователя **{username}**."
-    
+        confirmation_text = f"Не удалось разблокировать пользователя {username}."
+
     sent_confirmation = await bot.send_message(
         chat_id=callback.from_user.id,
         text=confirmation_text,
-        parse_mode="Markdown",
         disable_notification=True
     )
     asyncio.create_task(delete_message_after_delay(callback.from_user.id, sent_confirmation.message_id, delay=15))
@@ -1213,13 +1210,12 @@ async def reset_traffic_limit(callback: types.CallbackQuery):
     save_traffic_limits(traffic_limits)
     success = await unblock_user(username)
     if success:
-        confirmation_text = f"Пользователь **{username}** разблокирован. Новый лимит трафика установлен."
+        confirmation_text = f"Пользователь {username} разблокирован. Новый лимит трафика установлен."
     else:
-        confirmation_text = f"Не удалось разблокировать пользователя **{username}**."
+        confirmation_text = f"Не удалось разблокировать пользователя {username}."
     await bot.send_message(
         chat_id=callback.from_user.id,
         text=confirmation_text,
-        parse_mode="Markdown",
         disable_notification=True
     )
     callback.data = f'client_{username}'
@@ -1337,15 +1333,14 @@ async def send_user_config(callback_query: types.CallbackQuery):
         await callback_query.answer()
         return
     if not sent_messages:
-        sent_message = await bot.send_message(callback_query.from_user.id, f"Не удалось найти файлы конфигурации для пользователя **{username}**.", parse_mode="Markdown", disable_notification=True)
+        sent_message = await bot.send_message(callback_query.from_user.id, f"Не удалось найти файлы конфигурации для пользователя {username}.", disable_notification=True)
         asyncio.create_task(delete_message_after_delay(callback_query.from_user.id, sent_message.message_id, delay=15))
         await callback_query.answer()
         return
     else:
         sent_confirmation = await bot.send_message(
             chat_id=callback_query.from_user.id,
-            text=f"Конфигурация для **{username}** отправлена.",
-            parse_mode="Markdown",
+            text=f"Конфигурация для {username} отправлена.",
             disable_notification=True
         )
         asyncio.create_task(delete_message_after_delay(callback_query.from_user.id, sent_confirmation.message_id, delay=15))
@@ -1565,8 +1560,7 @@ async def deactivate_user(client_name: str):
         if success:
             sent_message = await bot.send_message(
                 admin,
-                f"Срок действия конфигурации пользователя **{client_name}** истек. Пользователь заблокирован.",
-                parse_mode="Markdown",
+                f"Срок действия конфигурации пользователя {client_name} истек. Пользователь заблокирован.",
                 disable_notification=True
             )
             asyncio.create_task(delete_message_after_delay(admin, sent_message.message_id, delay=15))
@@ -1575,8 +1569,7 @@ async def deactivate_user(client_name: str):
         else:
             sent_message = await bot.send_message(
                 admin,
-                f"Не удалось заблокировать пользователя **{client_name}** по истечении срока действия.",
-                parse_mode="Markdown",
+                f"Не удалось заблокировать пользователя {client_name} по истечении срока действия.",
                 disable_notification=True
             )
             asyncio.create_task(delete_message_after_delay(admin, sent_message.message_id, delay=15))
