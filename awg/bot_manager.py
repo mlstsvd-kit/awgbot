@@ -440,6 +440,7 @@ async def handle_messages(message: types.Message):
                 )
             else:
                 await message.answer("Ошибка: главное сообщение не найдено.")
+        return
     else:
         sent_message = await message.reply("Неизвестная команда или действие.")
         asyncio.create_task(delete_message_after_delay(sent_message.chat.id, sent_message.message_id, delay=2))
